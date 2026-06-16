@@ -8,14 +8,17 @@ import org.springframework.stereotype.Service;
 import com.akshitha.RideSharing.dto.CreateRideRequest;
 import com.akshitha.RideSharing.dto.RideResponse;
 import com.akshitha.RideSharing.dto.RouteDetails;
+import com.akshitha.RideSharing.dto.SeatMapResponse;
 import com.akshitha.RideSharing.entity.Ride;
 import com.akshitha.RideSharing.entity.RoutePoint;
+import com.akshitha.RideSharing.entity.SegmentInventory;
 import com.akshitha.RideSharing.entity.User;
 import com.akshitha.RideSharing.enums.Role;
 import com.akshitha.RideSharing.exceptions.BadRequestException;
 import com.akshitha.RideSharing.exceptions.ResourceNotFoundException;
 import com.akshitha.RideSharing.repository.RideRepo;
 import com.akshitha.RideSharing.repository.RoutePointRepo;
+import com.akshitha.RideSharing.repository.SegmentRepo;
 import com.akshitha.RideSharing.repository.UserRepo;
 
 import jakarta.transaction.Transactional;
@@ -28,6 +31,7 @@ public class RideService {
     private final RideRepo rideRepo;
     private final RoutePointRepo routePointRepo;
     private final RouteService routeService;
+    private final SegmentRepo segmentRepo;
     @Transactional
     public RideResponse createRide(CreateRideRequest request){
         User driver=userRepo.findById(request.getDriverId()).orElseThrow(()->new ResourceNotFoundException("Driver not found with given id"));
@@ -41,6 +45,7 @@ public class RideService {
                         .sourceLng(request.getSourceLng())
                         .destinationLat(request.getDestinationLat())
                         .destinationLng(request.getDestinationLng())
+                        .totalSeats(request.getTotalSeats())
                         .routeDistance(routeDetails.distanceKm())
                         .rideDateTime(request.getRideDateTime())
                         .build();
@@ -59,6 +64,17 @@ public class RideService {
             routePoints.add(routePoint);
         }
         routePointRepo.saveAll(routePoints);
+        List<SegmentInventory> inventories=new ArrayList<>();
+        for(int i=0;i<routePoints.size();i++){
+            SegmentInventory inventory=SegmentInventory.builder()
+                                                .ride(savedRide)
+                                                .fromIndex(i)
+                                                .toIndex(i+1)
+                                                .availableSeats(savedRide.getTotalSeats())
+                                                .build();
+            inventories.add(inventory);
+        }
+        segmentRepo.saveAll(inventories);
         return mapToResponse(savedRide, routePoints.size());
     }
 
@@ -79,6 +95,18 @@ public class RideService {
                     return mapToResponse(ride, totalPoints);
                 })
                 .toList();
+    }
+
+    //get seat map
+    public List<SeatMapResponse> getSeatMap(Long rideId){
+        rideRepo.findById(rideId).orElseThrow(()->new ResourceNotFoundException("Ride not found"));
+        return segmentRepo.findByRideIdOrderByFromIndex(rideId)
+                          .stream()
+                          .map(segment->new SeatMapResponse(
+                                segment.getFromIndex(),
+                                segment.getToIndex(),
+                                segment.getAvailableSeats()
+        )).toList();
     }
 
 }

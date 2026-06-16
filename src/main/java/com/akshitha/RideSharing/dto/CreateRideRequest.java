@@ -3,6 +3,7 @@ package com.akshitha.RideSharing.dto;
 import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,9 @@ public class CreateRideRequest{
     private Double destinationLat;
     @NotNull
     private Double destinationLng;
+    @NotNull
+    @Min(1)
+    private Integer totalSeats;
     @NotNull
     @FutureOrPresent
     private LocalDateTime rideDateTime;

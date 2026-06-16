@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.akshitha.RideSharing.dto.CreateRideRequest;
 import com.akshitha.RideSharing.dto.RideResponse;
+import com.akshitha.RideSharing.dto.SeatMapResponse;
 import com.akshitha.RideSharing.service.RideService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,5 +39,10 @@ public class RideController {
     @GetMapping
     public List<RideResponse> getAllRides(){
         return rideService.getAllRides();
+    }
+    @GetMapping("/{id}/seat-map")
+    @Operation(summary="Get seat map")
+    public List<SeatMapResponse> getSeatMap(@PathVariable Long id){
+        return rideService.getSeatMap(id);
     }
 }

@@ -39,7 +39,10 @@ public class Ride {
     @Column(nullable=false)
     private Double destinationLng;
     @Column(nullable=false)
+    private Integer totalSeats;
+    @Column(nullable=false)
     private Double routeDistance;
     @Column(nullable=false)
     private LocalDateTime rideDateTime;
+    
 }
