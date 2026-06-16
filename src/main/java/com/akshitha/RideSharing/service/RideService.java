@@ -5,8 +5,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.akshitha.RideSharing.dto.Coordinate;
 import com.akshitha.RideSharing.dto.CreateRideRequest;
+import com.akshitha.RideSharing.dto.NearestPoint;
 import com.akshitha.RideSharing.dto.RideResponse;
+import com.akshitha.RideSharing.dto.RideSearchResponse;
 import com.akshitha.RideSharing.dto.RouteDetails;
 import com.akshitha.RideSharing.dto.SeatMapResponse;
 import com.akshitha.RideSharing.entity.Ride;
@@ -20,6 +23,7 @@ import com.akshitha.RideSharing.repository.RideRepo;
 import com.akshitha.RideSharing.repository.RoutePointRepo;
 import com.akshitha.RideSharing.repository.SegmentRepo;
 import com.akshitha.RideSharing.repository.UserRepo;
+import com.akshitha.RideSharing.util.DistanceUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -107,6 +111,72 @@ public class RideService {
                                 segment.getToIndex(),
                                 segment.getAvailableSeats()
         )).toList();
+    }
+
+    //find nearest points for the ride
+    private NearestPoint findNearestPoint(double rideLat,double rideLng,List<RoutePoint> routePoints){
+        double minDistance=Double.MAX_VALUE;
+        int nearestIndex=-1;
+        for(RoutePoint point: routePoints){
+            double distance=DistanceUtil.distanceMeters(rideLat, rideLng, point.getLatitude(), point.getLongitute());
+            if(distance<minDistance){
+                minDistance=distance;
+                nearestIndex=point.getSequenceNo();
+            }
+
+        }
+        return new NearestPoint(nearestIndex,minDistance);
+    }
+
+    //search rides
+    private static final double SEARCH_RADIUS=500;
+    public List<RideSearchResponse> searchRides(double sourceLat,double sourceLng,double destinationLat,double destinationLng){
+        List<Ride> rides=rideRepo.findAll();
+        List<RideSearchResponse> matches=new ArrayList<>();
+        for(Ride ride:rides){
+            List<RoutePoint> routePoints=routePointRepo.findByRideIdOrderBySequenceNo(ride.getId());
+            if(routePoints.isEmpty()) continue;
+            NearestPoint pickUp=findNearestPoint(sourceLat, sourceLng, routePoints);
+            NearestPoint drop=findNearestPoint(destinationLat, destinationLng, routePoints);
+            boolean validDirection=pickUp.index()<drop.index();
+            boolean pickUpWithinRadius=pickUp.distanceMeters()<=SEARCH_RADIUS;
+            boolean dropWithinRadius=drop.distanceMeters()<=SEARCH_RADIUS;
+            System.out.println(
+                    "Ride=" + ride.getId()
+                );
+
+                System.out.println(
+                    "Pickup Index=" + pickUp.index()
+                );
+
+                System.out.println(
+                    "Drop Index=" + drop.index()
+                );
+
+                System.out.println(
+                    "Pickup Distance=" + pickUp.distanceMeters()
+                );
+
+                System.out.println(
+                    "Drop Distance=" + drop.distanceMeters()
+                );
+            if(validDirection && pickUpWithinRadius && dropWithinRadius){
+                RoutePoint pickUpPoint=routePoints.get(pickUp.index());
+                RoutePoint dropPoint=routePoints.get(drop.index());
+                matches.add(new RideSearchResponse(
+                    ride.getId(),
+                    ride.getDriver().getName(),
+                    new Coordinate(pickUpPoint.getLatitude(),pickUpPoint.getLongitute()),
+                    new Coordinate(dropPoint.getLatitude(),dropPoint.getLongitute()),
+                    ride.getRideDateTime(),
+                    pickUp.distanceMeters(),
+                    drop.distanceMeters()
+                ));
+                
+            }
+        }
+        
+        return matches;
     }
 
 }

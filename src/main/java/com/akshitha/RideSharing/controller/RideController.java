@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.akshitha.RideSharing.dto.CreateRideRequest;
 import com.akshitha.RideSharing.dto.RideResponse;
+import com.akshitha.RideSharing.dto.RideSearchResponse;
 import com.akshitha.RideSharing.dto.SeatMapResponse;
 import com.akshitha.RideSharing.service.RideService;
 
@@ -44,5 +46,11 @@ public class RideController {
     @Operation(summary="Get seat map")
     public List<SeatMapResponse> getSeatMap(@PathVariable Long id){
         return rideService.getSeatMap(id);
+    }
+    //search for matching rides
+    @Operation(summary="Search for matching rides")
+    @GetMapping("/search")
+    public List<RideSearchResponse> searchRides(@RequestParam Double sourceLat,@RequestParam Double sourceLng,@RequestParam Double destinationLat,@RequestParam Double destinationLng){
+        return rideService.searchRides(sourceLat, sourceLng, destinationLat, destinationLng);
     }
 }
