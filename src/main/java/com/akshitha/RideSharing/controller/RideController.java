@@ -1,5 +1,4 @@
 package com.akshitha.RideSharing.controller;
-
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;

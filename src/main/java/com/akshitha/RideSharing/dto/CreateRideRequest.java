@@ -31,6 +31,9 @@ public class CreateRideRequest{
     @NotNull
     @FutureOrPresent
     private LocalDateTime rideDateTime;
+    @NotNull
+    @Min(value=5,message="Minimum fare per Km is 5 INR")
+    private Double farePerKm;
 }
     
 

@@ -1,7 +1,10 @@
 package com.akshitha.RideSharing.entity;
 
-import jakarta.persistence.Column;
+import com.akshitha.RideSharing.enums.BookingStatus;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,25 +18,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="route_points")
+@Table(name="bookings")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RoutePoint {
+public class Booking {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne(optional=false)
+    @ManyToOne
     @JoinColumn(name="ride_id")
     private Ride ride;
-    @Column(nullable=false)
-    private Integer sequenceNo;
-    @Column(nullable=false)
-    private Double latitude;
-    @Column(nullable=false)
-    private Double longitute;
-    @Column(nullable=false)
-    private Double distanceFromStartKm;
+    @ManyToOne
+    @JoinColumn(name="rider_id")
+    private User rider;
+    private Integer pickupIndex;
+    private Integer dropIndex;
+    private Integer seatsBooked;
+    private Double distanceKm;
+    private Double fare;
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
 }

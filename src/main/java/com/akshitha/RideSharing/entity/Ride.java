@@ -43,6 +43,7 @@ public class Ride {
     @Column(nullable=false)
     private Double routeDistance;
     @Column(nullable=false)
-    private LocalDateTime rideDateTime;
-    
+    private LocalDateTime rideDateTime; 
+    @Column(nullable=false)
+    private  Double farePerKm;   
 }

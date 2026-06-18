@@ -8,4 +8,5 @@ import com.akshitha.RideSharing.entity.SegmentInventory;
 
 public interface SegmentRepo extends JpaRepository<SegmentInventory,Long>{
     List<SegmentInventory> findByRideIdOrderByFromIndex(Long rideId);
+    List<SegmentInventory> findByRideId(Long rideId);
 }

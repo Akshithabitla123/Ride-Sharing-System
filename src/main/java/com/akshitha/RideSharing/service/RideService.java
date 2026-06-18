@@ -36,6 +36,7 @@ public class RideService {
     private final RoutePointRepo routePointRepo;
     private final RouteService routeService;
     private final SegmentRepo segmentRepo;
+    private final RouteMatchingService routeMatchingService;
     @Transactional
     public RideResponse createRide(CreateRideRequest request){
         User driver=userRepo.findById(request.getDriverId()).orElseThrow(()->new ResourceNotFoundException("Driver not found with given id"));
@@ -52,18 +53,25 @@ public class RideService {
                         .totalSeats(request.getTotalSeats())
                         .routeDistance(routeDetails.distanceKm())
                         .rideDateTime(request.getRideDateTime())
+                        .farePerKm(request.getFarePerKm())
                         .build();
         Ride savedRide=rideRepo.save(ride);
 
         List<RoutePoint> routePoints=new ArrayList<>();
         List<List<Double>> coordinates=routeDetails.coordinates();
+        double cummulativeDistance=0.0;
         for(int i=0;i<coordinates.size();i++){
             List<Double> points=coordinates.get(i);
+            if(i>0){
+                List<Double> prev=coordinates.get(i-1);
+                cummulativeDistance+=DistanceUtil.distanceMeters(prev.get(1),prev.get(0) ,points.get(1) ,points.get(0) )/1000.0;
+            }
             RoutePoint routePoint=RoutePoint.builder()
                         .ride(savedRide)
                         .sequenceNo(i)
                         .longitute(points.get(0))
                         .latitude(points.get(1))
+                        .distanceFromStartKm(cummulativeDistance)
                         .build();
             routePoints.add(routePoint);
         }
@@ -113,21 +121,7 @@ public class RideService {
         )).toList();
     }
 
-    //find nearest points for the ride
-    private NearestPoint findNearestPoint(double rideLat,double rideLng,List<RoutePoint> routePoints){
-        double minDistance=Double.MAX_VALUE;
-        int nearestIndex=-1;
-        for(RoutePoint point: routePoints){
-            double distance=DistanceUtil.distanceMeters(rideLat, rideLng, point.getLatitude(), point.getLongitute());
-            if(distance<minDistance){
-                minDistance=distance;
-                nearestIndex=point.getSequenceNo();
-            }
-
-        }
-        return new NearestPoint(nearestIndex,minDistance);
-    }
-
+    
     //search rides
     private static final double SEARCH_RADIUS=500;
     public List<RideSearchResponse> searchRides(double sourceLat,double sourceLng,double destinationLat,double destinationLng){
@@ -136,8 +130,8 @@ public class RideService {
         for(Ride ride:rides){
             List<RoutePoint> routePoints=routePointRepo.findByRideIdOrderBySequenceNo(ride.getId());
             if(routePoints.isEmpty()) continue;
-            NearestPoint pickUp=findNearestPoint(sourceLat, sourceLng, routePoints);
-            NearestPoint drop=findNearestPoint(destinationLat, destinationLng, routePoints);
+            NearestPoint pickUp=routeMatchingService.findNearestPoint(sourceLat, sourceLng, routePoints);
+            NearestPoint drop=routeMatchingService.findNearestPoint(destinationLat, destinationLng, routePoints);
             boolean validDirection=pickUp.index()<drop.index();
             boolean pickUpWithinRadius=pickUp.distanceMeters()<=SEARCH_RADIUS;
             boolean dropWithinRadius=drop.distanceMeters()<=SEARCH_RADIUS;
