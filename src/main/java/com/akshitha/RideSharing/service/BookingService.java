@@ -54,16 +54,15 @@ public class BookingService {
         List<RoutePoint> routePoints=routePointRepo.findByRideIdOrderBySequenceNo(ride.getId());
         NearestPoint pickup=routeMatchingService.findNearestPoint(bookingRequest.pickupLat(), bookingRequest.pickupLng(), routePoints);
         NearestPoint drop=routeMatchingService.findNearestPoint(bookingRequest.dropLat(), bookingRequest.dropLng(), routePoints);
+        if(pickup.index()>=drop.index()){
+            throw new BookingException("Pickup must come before drop location");
+        }
         List<Booking> existingBookings=bookingRepo.findByRideIdAndRiderId(bookingRequest.rideId(),bookingRequest.riderId());
         for(Booking b:existingBookings){
             if(isOverlapping(pickup.index(),drop.index(),b.getPickupIndex(),b.getDropIndex())){
                 throw new BadRequestException("You already booked an overlapping segment of this ride");
             }
         }
-        if(pickup.index()>=drop.index()){
-            throw new BookingException("Pickup must come before drop location");
-        }
-
         final double MAX_RADIUS=500;
         if(pickup.distanceMeters()>MAX_RADIUS){
             throw new BadRequestException("Pickup point is too far from the route");
@@ -71,24 +70,20 @@ public class BookingService {
         if(drop.distanceMeters()>MAX_RADIUS){
             throw new BadRequestException("Drop point is too far from the route");
         }
+        List<SegmentInventory> segments=segmentRepo.lockSegments(bookingRequest.rideId(),pickup.index(),drop.index());
+        for(SegmentInventory s:segments){
+            if(s.getAvailableSeats()<bookingRequest.seatsBooked()){
+                throw new BadRequestException("Seats available are less than required");
+            }
+        }
+        for(SegmentInventory s:segments){
+            s.setAvailableSeats(s.getAvailableSeats()-bookingRequest.seatsBooked());
+        }
+        segmentRepo.saveAll(segments);
         RoutePoint pickupPoint=routePoints.get(pickup.index());
         RoutePoint dropPoint=routePoints.get(drop.index());
         double distanceKm=dropPoint.getDistanceFromStartKm()-pickupPoint.getDistanceFromStartKm();
         distanceKm=BigDecimal.valueOf(distanceKm).setScale(2,RoundingMode.HALF_UP).doubleValue();
-        //seat finding
-        List<SegmentInventory> inventories=segmentRepo.findByRideId(ride.getId());
-        List<SegmentInventory> affected=inventories.stream().filter(
-            segment->segment.getFromIndex()>=pickup.index() &&
-            segment.getToIndex()<=drop.index()
-        ).toList();
-        if(affected.isEmpty()){
-            throw new BookingException("No route segments found");
-        }
-        //finding minimum available seats from all the affected segments
-        int minimumSeats=affected.stream().mapToInt(SegmentInventory::getAvailableSeats).min().orElse(0);
-        if(minimumSeats<bookingRequest.seatsBooked()){
-            throw new BookingException("Seats available are less than required");
-        }
         //fare calculation
         double fare=distanceKm*ride.getFarePerKm();
         fare=BigDecimal.valueOf(fare).setScale(2,RoundingMode.HALF_UP).doubleValue();
@@ -104,11 +99,6 @@ public class BookingService {
                             .status(BookingStatus.CONFIRMED).build();
         
         Booking savedBooking=bookingRepo.save(booking);
-        //reduce seats in affecteed segments
-        for(SegmentInventory segment:affected){
-            segment.setAvailableSeats(segment.getAvailableSeats()-bookingRequest.seatsBooked());
-        }
-        segmentRepo.saveAll(affected);
         return new BookingResponse(
             savedBooking.getId(),
             ride.getId(),
