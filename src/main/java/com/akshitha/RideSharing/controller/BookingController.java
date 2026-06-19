@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,6 +54,17 @@ public class BookingController {
     @Operation(summary="Cancel the booking")
     public String cancelBooking(@PathVariable Long bookingId,@PathVariable Long riderId){
         return bookingService.cancelBooking(bookingId,riderId);
+    }
+    //ride completion flow
+    @PutMapping("/driver-complete/{bookingId}/{driverId}")
+    @Operation(summary="COmplete the ride from driver side")
+    public String driverComplete(@PathVariable Long bookingId,@PathVariable Long driverId){
+        return bookingService.driverComplete(bookingId, driverId);
+    }
+    @PutMapping("/rider-complete/{bookingId}/{rider}")
+    @Operation(summary="COmplete the ride from rider side")
+    public String riderComplete(@PathVariable Long bookingId,@PathVariable Long riderId){
+        return bookingService.riderComplete(bookingId, riderId);
     }
 
 }

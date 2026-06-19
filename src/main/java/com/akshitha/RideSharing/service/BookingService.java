@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -97,7 +98,9 @@ public class BookingService {
                             .seatsBooked(bookingRequest.seatsBooked())
                             .distanceKm(distanceKm)
                             .fare(fare)
-                            .status(BookingStatus.CONFIRMED).build();
+                            .status(BookingStatus.CONFIRMED)
+                            .completedByDriver(false)
+                            .completedByRider(false).build();
         
         Booking savedBooking=bookingRepo.save(booking);
         return new BookingResponse(
@@ -111,7 +114,9 @@ public class BookingService {
             savedBooking.getSeatsBooked(),
             savedBooking.getDistanceKm(),
             savedBooking.getFare(),
-            savedBooking.getStatus()
+            savedBooking.getStatus(),
+            savedBooking.isCompletedByDriver(),
+            savedBooking.isCompletedByRider()
         );
     }
 
@@ -154,7 +159,9 @@ public class BookingService {
                 booking.getSeatsBooked(),
                 booking.getDistanceKm(),
                 booking.getFare(),
-                booking.getStatus()
+                booking.getStatus(),
+                booking.isCompletedByDriver(),
+                booking.isCompletedByRider()
         );
     }
     
@@ -184,4 +191,48 @@ public class BookingService {
         return "Booking cancelled";
     }
 
+    //driver completion
+    public String driverComplete(Long bookingId, Long driverId){
+        Booking booking=bookingRepo.findById(bookingId).orElseThrow(()->new ResourceNotFoundException("Booking not found"));
+        if(booking.getStatus()!=BookingStatus.CONFIRMED){
+            throw new BadRequestException("Only confirmed bookings can be completed");
+        }
+        if(!Objects.equals(booking.getRide().getDriver().getId(), driverId)){
+            throw new BadRequestException("Only corresponding driver can complete");
+        }
+        if(booking.isCompletedByDriver()){
+            throw new BadRequestException("Driver has already completed");
+        }
+        booking.setCompletedByDriver(true);
+        if(booking.isCompletedByRider()){
+            booking.setStatus(BookingStatus.COMPLETED);
+        }
+        Booking savedBooking=bookingRepo.save(booking);
+        if(savedBooking.getStatus()==BookingStatus.COMPLETED){
+            return "Ride completed";
+        }
+        return "Ride completed, waiting for rider approval";
+    }
+    //rider completion
+    public String riderComplete(Long bookingId, Long riderId){
+        Booking booking=bookingRepo.findById(bookingId).orElseThrow(()->new ResourceNotFoundException("Booking not found"));
+        if(booking.getStatus()!=BookingStatus.CONFIRMED){
+            throw new BadRequestException("Only confirmed bookings can be completed");
+        }
+        if(!Objects.equals(booking.getRider().getId(), riderId)){
+            throw new BadRequestException("Only corresponding rider can complete");
+        }
+         if(booking.isCompletedByRider()){
+            throw new BadRequestException("Rider has already completed");
+        }
+        booking.setCompletedByRider(true);
+        if(booking.isCompletedByDriver()){
+            booking.setStatus(BookingStatus.COMPLETED);
+        }
+        Booking savedBooking=bookingRepo.save(booking);
+        if(savedBooking.getStatus()==BookingStatus.COMPLETED){
+            return "Ride completed";
+        }
+        return "Ride completed, waiting for driver approval";
+    }
 }

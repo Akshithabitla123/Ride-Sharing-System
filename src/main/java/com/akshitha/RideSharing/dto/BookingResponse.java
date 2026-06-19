@@ -15,5 +15,7 @@ public record BookingResponse(
     Integer seatsBooked,
     Double distanceKm,
     Double fare,
-    BookingStatus status
+    BookingStatus status,
+    Boolean completedByDriver,
+    Boolean completedByRider
 ) {}

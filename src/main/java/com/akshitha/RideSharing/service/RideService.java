@@ -77,7 +77,7 @@ public class RideService {
         }
         routePointRepo.saveAll(routePoints);
         List<SegmentInventory> inventories=new ArrayList<>();
-        for(int i=0;i<routePoints.size();i++){
+        for(int i=0;i<routePoints.size()-1;i++){
             SegmentInventory inventory=SegmentInventory.builder()
                                                 .ride(savedRide)
                                                 .fromIndex(i)

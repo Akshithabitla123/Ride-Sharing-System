@@ -2,6 +2,7 @@ package com.akshitha.RideSharing.entity;
 
 import com.akshitha.RideSharing.enums.BookingStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -41,4 +42,8 @@ public class Booking {
     private Double fare;
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+    @Column(nullable=false)
+    private boolean completedByDriver;
+    @Column(nullable=false)
+    private boolean completedByRider;
 }
