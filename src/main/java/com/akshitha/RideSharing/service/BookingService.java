@@ -52,6 +52,10 @@ public class BookingService {
         if(rider.getRole()!=Role.RIDER){
             throw new BookingException("Only Rider is allowed to do bookings");
         }
+        LocalDateTime bookingCutOffTime=ride.getRideDateTime().minusMinutes(10);
+        if(LocalDateTime.now().isAfter(bookingCutOffTime)){
+            throw new BadRequestException("Bookings are closed for this ride. Booking is allowed only until 10 minutes before departure.");
+        }
         //get all the routepoints and find the nearest pickup and drop points
         List<RoutePoint> routePoints=routePointRepo.findByRideIdOrderBySequenceNo(ride.getId());
         NearestPoint pickup=routeMatchingService.findNearestPoint(bookingRequest.pickupLat(), bookingRequest.pickupLng(), routePoints);
@@ -179,7 +183,7 @@ public class BookingService {
         }
         LocalDateTime cancellationDeadline=booking.getRide().getRideDateTime().minusMinutes(30);
         if(LocalDateTime.now().isAfter(cancellationDeadline)){
-            throw new BadRequestException("Cancellation window has closed");
+            throw new BadRequestException("Cancellation window has closed, Cancellation is allowed only until 30 minutes before departure");
         }
         List<SegmentInventory> segments=segmentRepo.lockSegments(booking.getRide().getId(),booking.getPickupIndex(),booking.getDropIndex());
         for(SegmentInventory segment:segments){
