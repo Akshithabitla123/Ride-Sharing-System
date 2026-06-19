@@ -2,6 +2,7 @@ package com.akshitha.RideSharing.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -157,5 +158,30 @@ public class BookingService {
         );
     }
     
+    @Transactional
+    public String cancelBooking(Long bookingId,Long riderId){
+        Booking booking=bookingRepo.findById(bookingId).orElseThrow(()->new ResourceNotFoundException("Booking not found"));
+        if(!booking.getRider().getId().equals(riderId)){
+            throw new BadRequestException("You can only cancel your bookings");
+        }
+        if(booking.getStatus()==BookingStatus.CANCELLED){
+            throw new BadRequestException("Booking is already cancelled");
+        }
+        if(booking.getStatus()==BookingStatus.COMPLETED){
+            throw new BadRequestException("Cannot cancel completed rides");
+        }
+        LocalDateTime cancellationDeadline=booking.getRide().getRideDateTime().minusMinutes(30);
+        if(LocalDateTime.now().isAfter(cancellationDeadline)){
+            throw new BadRequestException("Cancellation window has closed");
+        }
+        List<SegmentInventory> segments=segmentRepo.lockSegments(booking.getRide().getId(),booking.getPickupIndex(),booking.getDropIndex());
+        for(SegmentInventory segment:segments){
+            segment.setAvailableSeats(segment.getAvailableSeats()+booking.getSeatsBooked());
+        }
+        segmentRepo.saveAll(segments);
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepo.save(booking);
+        return "Booking cancelled";
+    }
 
 }

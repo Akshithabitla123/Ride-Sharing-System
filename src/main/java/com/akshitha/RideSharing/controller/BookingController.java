@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +47,12 @@ public class BookingController {
     @Operation(summary="Only accessible for drivers")
     public List<BookingResponse> getBookingsOfDriver(@PathVariable Long id){
         return bookingService.getBookingsOfDriver(id);
+    }
+
+    @PatchMapping("/cancel/{bookingId}/{riderId}")
+    @Operation(summary="Cancel the booking")
+    public String cancelBooking(@PathVariable Long bookingId,@PathVariable Long riderId){
+        return bookingService.cancelBooking(bookingId,riderId);
     }
 
 }
