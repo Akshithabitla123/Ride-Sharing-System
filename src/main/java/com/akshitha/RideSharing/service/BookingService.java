@@ -69,7 +69,7 @@ public class BookingService {
                 throw new BadRequestException("You already booked an overlapping segment of this ride");
             }
         }
-        final double MAX_RADIUS=500;
+        final double MAX_RADIUS=1500;
         if(pickup.distanceMeters()>MAX_RADIUS){
             throw new BadRequestException("Pickup point is too far from the route");
         }

@@ -13,6 +13,7 @@ import com.akshitha.RideSharing.dto.CreateRideRequest;
 import com.akshitha.RideSharing.dto.RideResponse;
 import com.akshitha.RideSharing.dto.RideSearchResponse;
 import com.akshitha.RideSharing.dto.SeatMapResponse;
+import com.akshitha.RideSharing.enums.RideStatus;
 import com.akshitha.RideSharing.service.RideService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,5 +52,11 @@ public class RideController {
     @GetMapping("/search")
     public List<RideSearchResponse> searchRides(@RequestParam Double sourceLat,@RequestParam Double sourceLng,@RequestParam Double destinationLat,@RequestParam Double destinationLng){
         return rideService.searchRides(sourceLat, sourceLng, destinationLat, destinationLng);
+    }
+    //get status of ride
+    @Operation(summary="Check whether route points are calculated or not")
+    @GetMapping("/status/{rideId}")
+    public RideStatus checkStatus(@PathVariable Long rideId){
+        return rideService.checkRideStatus(rideId);
     }
 }

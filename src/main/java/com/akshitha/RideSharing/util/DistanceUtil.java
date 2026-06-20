@@ -1,5 +1,6 @@
 package com.akshitha.RideSharing.util;
 
+
 public final class DistanceUtil {
     private DistanceUtil(){}
     private static final double EARTH_RADIUS_M=6371000;

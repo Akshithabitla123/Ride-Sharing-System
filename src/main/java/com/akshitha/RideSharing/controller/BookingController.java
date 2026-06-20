@@ -57,12 +57,12 @@ public class BookingController {
     }
     //ride completion flow
     @PutMapping("/driver-complete/{bookingId}/{driverId}")
-    @Operation(summary="COmplete the ride from driver side")
+    @Operation(summary="Complete the ride from driver side")
     public String driverComplete(@PathVariable Long bookingId,@PathVariable Long driverId){
         return bookingService.driverComplete(bookingId, driverId);
     }
-    @PutMapping("/rider-complete/{bookingId}/{rider}")
-    @Operation(summary="COmplete the ride from rider side")
+    @PutMapping("/rider-complete/{bookingId}/{riderId}")
+    @Operation(summary="Complete the ride from rider side")
     public String riderComplete(@PathVariable Long bookingId,@PathVariable Long riderId){
         return bookingService.riderComplete(bookingId, riderId);
     }

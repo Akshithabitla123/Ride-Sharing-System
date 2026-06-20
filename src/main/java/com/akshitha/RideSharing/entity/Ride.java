@@ -2,8 +2,12 @@ package com.akshitha.RideSharing.entity;
 
 import java.time.LocalDateTime;
 
+import com.akshitha.RideSharing.enums.RideStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,6 +35,8 @@ public class Ride {
     @JoinColumn(name="driver_id")
     private User driver;
     @Column(nullable=false)
+    @Enumerated(EnumType.STRING)
+    private RideStatus status;
     private Double sourceLat;
     @Column(nullable=false)
     private Double sourceLng;
