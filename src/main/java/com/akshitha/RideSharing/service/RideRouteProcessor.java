@@ -29,12 +29,13 @@ public class RideRouteProcessor {
     private final RoutePointRepo routePointRepo;
     private final SegmentRepo segmentRepo;
 
-    @Async
+    @Async("rideExecutor")
     @Transactional
     public void generateRouteData(Long rideId){
         long start=System.currentTimeMillis();
         try{
             System.out.println("Started processing ride "+rideId);
+            System.out.println("Thread= "+Thread.currentThread().getName());
             Ride ride=rideRepo.findById(rideId).orElseThrow();
             long t1=System.currentTimeMillis();
             RouteDetails routeDetails=routeService.getCompleteRoute(ride.getSourceLat(),ride.getSourceLng(),ride.getDestinationLat(),ride.getDestinationLng());
